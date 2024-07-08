@@ -29,23 +29,20 @@ function Cheated() {
                                 if (!acc[submission.contestId]) {
                                     acc[submission.contestId] = {
                                         contestId: submission.contestId,
-                                        solvedProblems: new Set(),
-                                        skippedProblems: new Set()
+                                        Problems: 0,
+                                        skippedProblems: 0
                                     };
-                                }
-                                if (submission.verdict.includes('PARTIAL')) {
-                                    acc[submission.contestId].solvedProblems.add(submission.problem.index);
-                                } else if (submission.verdict === 'OK') {
-                                    acc[submission.contestId].solvedProblems.add(submission.problem.index);
-                                } else if (submission.verdict === 'SKIPPED') {
-                                    acc[submission.contestId].skippedProblems.add(submission.problem.index);
+                                } 
+                                acc[submission.contestId].Problems++;
+                                 if (submission.verdict === 'SKIPPED') {
+                                    acc[submission.contestId].skippedProblems++;
                                 }
                                 return acc;
                             }, {});
                         const cheatedContests = Object.values(solved)
                             .filter(contest => {
-                                const totalProblemsInContest = contest.solvedProblems.size + contest.skippedProblems.size;
-                                return totalProblemsInContest > 1 && contest.skippedProblems.size === totalProblemsInContest;
+                                
+                                return contest.Problems > 1 && contest.skippedProblems === contest.Problems;
                             });
 
                         setData(cheatedContests);
