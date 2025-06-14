@@ -18,15 +18,59 @@ app.get('/', (req, res) => {
     res.send('Leaderboard');
 });
 
+// GET /leader?page=1&limit=10&search=kunal
 app.get('/leader', async (req, res) => {
-    try{
-         const response = await User.find();
-         res.status(200).send(response);
-    }catch(err){
-        console.log(err);
-        res.status(500).send(err);
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const search = req.query.search || '';
+      const regex = new RegExp(search, 'i'); // Case-insensitive
+  
+      const skip = (page - 1) * limit;
+  
+      const totalCount = await User.countDocuments({ username: regex });
+      const data = await User.find({ username: regex })
+        .sort({ count: -1 })
+        .skip(skip)
+        .limit(limit);
+  
+      res.status(200).json({
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        currentPage: page,
+        data,
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Internal Server Error' });
     }
-});
+  });
+
+  app.get('/leader/summary', async (req, res) => {
+    try {
+      const totalUsers = await User.countDocuments();
+      
+      const aggregation = await User.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalSearches: { $sum: "$count" }
+          }
+        }
+      ]);
+  
+      res.status(200).json({
+        totalUsers,
+        totalSearches: aggregation[0]?.totalSearches || 0
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+  
+  
+  
 
 app.post('/user', async (req, res) => {
     try {
